@@ -1,5 +1,6 @@
 require("dotenv").config();
 const { Client } = require("discord.js");
+const { kickUsers, banUsers } = require('./services');
 
 // This client basically is the bot 
 const client = new Client();
@@ -11,6 +12,7 @@ client.on("ready", () => {
     console.log(`${client.user.tag} successfully logged in and running`); // client.user.tag is just the name of the bot
 });
 
+
 client.on("message", async (message) => {
     if (message.author.bot) return; // if the message was sent by the bot itself we have to ignore it
     if (message.content === "hello") {
@@ -18,43 +20,21 @@ client.on("message", async (message) => {
     }
 
     // for a command the prefix will be followed by the command name and all the arguments following the command name will be separated by spaces
+    // before giving any command to bots make sure to give the respective permissions
     if (message.content.startsWith(PREFIX)) {
         const [cmd_name, ...args] = message.content
             .trim()
             .substring(PREFIX.length)
             .split(/\s+/); // ignores all the whitespace among arguments
 
-        // Kick users(give bots proper admissions in the server)
         if (cmd_name === 'kick') {
+            await kickUsers(message, args);
 
-            // We check if the member who requested to kick a user actually has that permission or not
-            if (!message.member.hasPermission('KICK_MEMBERS')) {
-                return message.reply("You do not have permission to kick users");
-            }
-
-            if (args.length === 0) return message.reply("Please enter the user id to kick the user");
-            const member = message.guild.members.cache.get(args[0]); // guild just means the server
-            if (!member) return message.channel.send("User not found");
-
-            member
-                .kick()
-                .then((member) => message.channel.send(`${member} was kicked`))
-                .catch(e => message.channel.send("I cannot kick this user :("))
         } else if (cmd_name === "ban") {
-            if (!message.member.hasPermission('BAN_MEMBERS')) {
-                return message.reply("You do not have permission to ban users");
-            }
-
-            if (args.length === 0) return message.reply("Please enter the user id to kick the user");
-            try {
-                const bannedUser = await message.guild.members.ban(args[0]);
-                message.channel.send("The member was successfully banned from the server");
-            } catch (e) {
-                message.reply("Some error occurred. Either I don't have permissions or the user is not found");
-            }
+            await banUsers(message, args);
+        } else {
+            message.reply("Unknown command");
         }
-
-
     }
 });
 
