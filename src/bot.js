@@ -1,11 +1,17 @@
 require("dotenv").config();
-const { Client } = require("discord.js");
+const { Client, WebhookClient } = require("discord.js");
 const { kickUsers, banUsers } = require('./services');
 
 // This client basically is the bot 
 const client = new Client({
-      partials: ['REACTION', 'MESSAGE', 'GUILD_MEMBER']
+    partials: ['REACTION', 'MESSAGE', 'GUILD_MEMBER']
 });
+
+const webhookClient = new WebhookClient(
+  process.env.WEBHOOK_ID,
+  process.env.WEBHOOK_TOKEN
+);
+
 const PREFIX = "$"; // The prefix for all the commands. So when a message starts with this prefix it means that it is a command
 
 // The bot can listen to all the events that happens in the server such as message, reply etc
@@ -34,7 +40,11 @@ client.on("message", async (message) => {
 
         } else if (cmd_name === "ban") {
             await banUsers(message, args);
-        } else {
+        } else if(cmd_name === 'announce'){
+          args.join('');
+          webhookClient.send(args)
+        } 
+        else {
             message.reply("Unknown command");
         }
     }
